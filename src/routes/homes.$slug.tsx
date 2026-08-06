@@ -16,10 +16,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { PhotoGallery } from "@/components/property/PhotoGallery";
 import { BookingRequestDialog } from "@/components/property/BookingRequestDialog";
-import { getProperty, properties } from "@/data/properties";
+import { getProperty, properties, type Property } from "@/data/properties";
 
 export const Route = createFileRoute("/homes/$slug")({
-  loader: ({ params }) => {
+  loader: ({ params }): { property: Property } => {
     const property = getProperty(params.slug);
     if (!property) throw notFound();
     return { property };

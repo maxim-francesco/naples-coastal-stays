@@ -76,8 +76,8 @@ function Home() {
             >
               <div className="overflow-hidden">
                 <img
-                  src={property.photos[0].src}
-                  alt={property.photos[0].alt}
+                  src={property.photos[0]!.src}
+                  alt={property.photos[0]!.alt}
                   loading="lazy"
                   width={1600}
                   height={1104}

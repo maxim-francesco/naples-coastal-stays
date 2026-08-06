@@ -37,10 +37,10 @@ export function PhotoGallery({ photos, title }: { photos: Photo[]; title: string
       <Dialog open={active !== null} onOpenChange={() => setActive(null)}>
         <DialogContent className="max-w-4xl overflow-hidden rounded-2xl p-0">
           <DialogTitle className="sr-only">{title} photos</DialogTitle>
-          {active !== null && (
+          {active !== null && photos[active] && (
             <img
-              src={photos[active].src}
-              alt={photos[active].alt}
+              src={photos[active]!.src}
+              alt={photos[active]!.alt}
               className="max-h-[80vh] w-full object-contain bg-foreground/5"
             />
           )}
