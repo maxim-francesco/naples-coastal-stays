@@ -11,7 +11,37 @@ import {
   Users,
   Wifi,
   Sparkles,
+  Snowflake,
+  ChefHat,
+  Sun,
+  Flag,
+  Car,
+  WashingMachine,
+  Tv,
+  KeyRound,
+  Coffee,
+  Waves,
+  Bath as BathIcon,
+  UtensilsCrossed,
+  Check,
 } from "lucide-react";
+
+const amenityIcons: Record<string, typeof Wifi> = {
+  "Fast Wi-Fi": Wifi,
+  "Central air conditioning": Snowflake,
+  "Full modern kitchen": ChefHat,
+  "Open kitchen & dining": UtensilsCrossed,
+  "Screened lanai": Sun,
+  "Screened patio": Sun,
+  "Golf course view": Flag,
+  "Water view": Waves,
+  "Marble bathroom": BathIcon,
+  "Free parking": Car,
+  "Washer & dryer": WashingMachine,
+  "Smart TV": Tv,
+  "Self check-in": KeyRound,
+  "Coffee maker": Coffee,
+};
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { PhotoGallery } from "@/components/property/PhotoGallery";
