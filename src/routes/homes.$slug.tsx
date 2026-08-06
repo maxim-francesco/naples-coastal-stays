@@ -144,14 +144,18 @@ function PropertyDetail() {
           <section>
             <h2 className="text-2xl">Amenities</h2>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-              {property.amenities.map((amenity) => (
-                <li key={amenity} className="flex items-center gap-3 text-sm">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-accent">
-                    <Wifi className="size-3.5 text-primary" />
-                  </span>
-                  {amenity}
-                </li>
-              ))}
+              {property.amenities.map((amenity) => {
+                const Icon = amenityIcons[amenity] ?? Check;
+                return (
+                  <li key={amenity} className="flex items-center gap-3 text-sm">
+                    <span className="flex size-8 items-center justify-center rounded-full bg-accent">
+                      <Icon className="size-3.5 text-primary" />
+                    </span>
+                    {amenity}
+                  </li>
+                );
+              })}
+
             </ul>
           </section>
 
