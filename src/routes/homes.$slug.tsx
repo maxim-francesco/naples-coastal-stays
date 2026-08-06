@@ -49,7 +49,8 @@ const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 function PropertyDetail() {
-  const { property } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const property = getProperty(slug)!;
   const [range, setRange] = useState<DateRange | undefined>();
 
   const blocked = useMemo(
