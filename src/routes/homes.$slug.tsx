@@ -46,7 +46,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { PhotoGallery } from "@/components/property/PhotoGallery";
 import { BookingRequestDialog } from "@/components/property/BookingRequestDialog";
-import { getPropertyBySlug, getActiveProperties, type Property } from "@/server/properties";
+import { getPropertyBySlug, getActiveProperties, type Property } from "@/lib/properties.server";
 
 export const Route = createFileRoute("/homes/$slug")({
   loader: async ({ params }): Promise<{ property: Property; activeProperties: Property[] }> => {

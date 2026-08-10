@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase.admin.server";
 import { propertyAssets } from "@/data/propertyAssets";
 
 export interface Property {
@@ -42,6 +41,7 @@ const mapRowToProperty = (row: any): Property => {
 
 export const getActiveProperties = createServerFn({ method: "GET" })
   .handler(async (): Promise<Property[]> => {
+    const { supabaseAdmin } = await import("@/lib/supabase.admin.server");
     const { data, error } = await supabaseAdmin
       .from("properties")
       .select("*")
@@ -59,6 +59,7 @@ export const getActiveProperties = createServerFn({ method: "GET" })
 export const getPropertyBySlug = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
   .handler(async ({ data: slug }): Promise<Property | null> => {
+    const { supabaseAdmin } = await import("@/lib/supabase.admin.server");
     const { data, error } = await supabaseAdmin
       .from("properties")
       .select("*")

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BedDouble, Bath, Users, Sparkles, KeyRound, BadgePercent, Palmtree } from "lucide-react";
 import heroImage from "@/assets/hero-coastal.jpg";
-import { getActiveProperties } from "@/server/properties";
+import { getActiveProperties } from "@/lib/properties.server";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
