@@ -46,13 +46,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { PhotoGallery } from "@/components/property/PhotoGallery";
 import { BookingRequestDialog } from "@/components/property/BookingRequestDialog";
-import { getProperty, properties, type Property } from "@/data/properties";
+import { getPropertyBySlug, getActiveProperties, type Property } from "@/server/properties";
 
 export const Route = createFileRoute("/homes/$slug")({
-  loader: ({ params }): { property: Property } => {
-    const property = getProperty(params.slug);
+  loader: async ({ params }): Promise<{ property: Property; activeProperties: Property[] }> => {
+    const [property, activeProperties] = await Promise.all([
+      getPropertyBySlug({ data: params.slug }),
+      getActiveProperties(),
+    ]);
     if (!property) throw notFound();
-    return { property };
+    return { property, activeProperties };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -79,8 +82,7 @@ const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 function PropertyDetail() {
-  const { slug } = Route.useParams();
-  const property = getProperty(slug)!;
+  const { property, activeProperties } = Route.useLoaderData();
   const [range, setRange] = useState<DateRange | undefined>();
 
   const blocked = useMemo(
@@ -98,7 +100,7 @@ function PropertyDetail() {
     { icon: CalendarRange, label: `${property.minNights}-night minimum` },
   ];
 
-  const other = properties.find((p) => p.slug !== property.slug);
+  const other = activeProperties.find((p) => p.slug !== property.slug);
 
   return (
     <article className="mx-auto max-w-6xl px-5 pt-8 sm:px-8">

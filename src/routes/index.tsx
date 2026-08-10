@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BedDouble, Bath, Users, Sparkles, KeyRound, BadgePercent, Palmtree } from "lucide-react";
 import heroImage from "@/assets/hero-coastal.jpg";
-import { properties } from "@/data/properties";
+import { getActiveProperties } from "@/server/properties";
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    return getActiveProperties();
+  },
   head: () => ({
     meta: [
       { title: "Palm & Sands — Two boutique vacation homes in Naples, FL" },
@@ -35,6 +38,8 @@ const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 function Home() {
+  const properties = Route.useLoaderData();
+
   return (
     <>
       <section className="relative">

@@ -2,12 +2,22 @@ import { Link } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { properties } from "@/data/properties";
 
 const linkClass =
   "text-sm text-foreground/75 transition-colors hover:text-foreground data-[status=active]:text-foreground";
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+interface PropertyLink {
+  slug: string;
+  name: string;
+}
+
+function NavLinks({
+  properties,
+  onNavigate,
+}: {
+  properties: PropertyLink[];
+  onNavigate?: () => void;
+}) {
   return (
     <>
       <Link to="/" className={linkClass} onClick={onNavigate} activeOptions={{ exact: true }}>
@@ -31,7 +41,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ properties = [] }: { properties?: PropertyLink[] }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
@@ -43,7 +53,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <NavLinks />
+          <NavLinks properties={properties} />
         </nav>
 
         <Sheet>
@@ -54,7 +64,7 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
             <nav className="mt-10 flex flex-col gap-6 px-5">
-              <NavLinks />
+              <NavLinks properties={properties} onNavigate={() => {}} />
             </nav>
           </SheetContent>
         </Sheet>
@@ -62,3 +72,4 @@ export function SiteHeader() {
     </header>
   );
 }
+

@@ -1,8 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, Phone, MapPin } from "lucide-react";
-import { properties } from "@/data/properties";
 
-export function SiteFooter() {
+interface PropertyLink {
+  slug: string;
+  name: string;
+}
+
+export function SiteFooter({ properties = [] }: { properties?: PropertyLink[] }) {
   return (
     <footer className="mt-24 border-t border-border/70 bg-sand">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-3">
