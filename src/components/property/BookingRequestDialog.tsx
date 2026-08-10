@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Property } from "@/lib/properties.server";
+import { submitBookingRequest } from "@/lib/bookings.server";
 
 const currency = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -47,6 +48,8 @@ export function BookingRequestDialog({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const nights =
     stay?.from && stay?.to ? Math.max(0, differenceInCalendarDays(stay.to, stay.from)) : 0;
@@ -56,14 +59,38 @@ export function BookingRequestDialog({
   );
   const belowMinimum = nights > 0 && nights < property.minNights;
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!stay?.from || !stay?.to || belowMinimum) {
       toast.error(`Please choose dates of at least ${property.minNights} nights.`);
       return;
     }
-    setSubmitted(true);
-    toast.success("Request sent — we'll reply within 24 hours.");
+    
+    setSubmitting(true);
+    try {
+      const payload = {
+        property_id: property.id || null,
+        guest_name: name,
+        email,
+        check_in: format(stay.from, "yyyy-MM-dd"),
+        check_out: format(stay.to, "yyyy-MM-dd"),
+        guests: Number(guests),
+        message: message || "",
+        website: website,
+      };
+
+      const res = await submitBookingRequest({ data: payload });
+      if (res.ok) {
+        setSubmitted(true);
+        toast.success("Request sent — we'll reply within 24 hours.");
+      } else {
+        toast.error(res.error || "Failed to submit booking request.");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "An unexpected error occurred.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -108,6 +135,16 @@ export function BookingRequestDialog({
             </DialogHeader>
 
             <div className="mt-6 space-y-5">
+              <div className="absolute -left-[9999px] opacity-0" aria-hidden="true">
+                <input
+                  type="text"
+                  name="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Dates</Label>
                 <div className="rounded-2xl border border-border bg-card p-2">
@@ -202,8 +239,8 @@ export function BookingRequestDialog({
                 </div>
               </div>
 
-              <Button type="submit" size="lg" className="w-full rounded-full">
-                Send request
+              <Button type="submit" size="lg" className="w-full rounded-full" disabled={submitting}>
+                {submitting ? "Sending..." : "Send request"}
               </Button>
             </div>
           </form>

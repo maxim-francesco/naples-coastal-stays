@@ -28,6 +28,7 @@ import {
   Image,
 } from "lucide-react";
 import { PhotoManagerDialog } from "@/components/admin/PhotoManagerDialog";
+import { BookingInbox } from "@/components/admin/BookingInbox";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -218,6 +219,7 @@ function AdminDashboard() {
   // Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [propertyToEdit, setPropertyToEdit] = useState<DBProperty | null>(null);
+  const [activeTab, setActiveTab] = useState<"properties" | "bookings">("properties");
   const [form, setForm] = useState<PropertyFormState>(defaultFormState);
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -417,153 +419,183 @@ function AdminDashboard() {
 
       {/* Main Body */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-              Properties
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Manage your vacation rentals, pricing, and amenities.
-            </p>
-          </div>
+        {/* Tab Switcher */}
+        <div className="flex border-b border-border mb-8">
           <button
-            onClick={handleOpenCreateForm}
-            className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition-all cursor-pointer"
-            style={{ minHeight: "44px" }}
+            onClick={() => setActiveTab("properties")}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-all mr-6 cursor-pointer ${
+              activeTab === "properties"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <Plus className="size-4" />
-            Add property
+            Properties
+          </button>
+          <button
+            onClick={() => setActiveTab("bookings")}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              activeTab === "bookings"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Booking Requests
           </button>
         </div>
 
-        {/* Properties List */}
-        {properties.length === 0 ? (
-          <div className="text-center rounded-2xl border border-dashed border-border bg-card p-12">
-            <Home className="mx-auto size-12 text-muted-foreground/50 mb-4" />
-            <h3 className="font-display text-lg font-medium text-foreground">No properties yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Get started by creating your first vacation rental property.
-            </p>
-            <button
-              onClick={handleOpenCreateForm}
-              className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 cursor-pointer"
-              style={{ minHeight: "44px" }}
-            >
-              <Plus className="size-4" />
-              Add property
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {properties.map((property) => (
-              <div
-                key={property.id}
-                className="rounded-2xl border border-border bg-card p-5 md:p-6 shadow-soft hover:shadow-lift transition-all flex flex-col md:flex-row gap-5 justify-between"
-              >
-                <div className="flex-1 space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
-                      {property.name}
-                    </h2>
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-muted border border-border text-foreground">
-                      {property.slug}
-                    </span>
-                    {property.is_active ? (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800/50">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{property.area}</span> &middot; {property.short_description}
-                  </p>
-
-                  {/* Facts Row */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 pt-2 border-t border-border/50 text-xs">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <DollarSign className="size-3.5 text-primary shrink-0" />
-                      <div>
-                        <div className="font-medium text-foreground">${property.base_rate}/night</div>
-                        <div className="text-[10px]">Base rate</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <DollarSign className="size-3.5 text-primary shrink-0" />
-                      <div>
-                        <div className="font-medium text-foreground">${property.cleaning_fee}</div>
-                        <div className="text-[10px]">Cleaning fee</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Calendar className="size-3.5 text-primary shrink-0" />
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {property.min_nights} {property.min_nights === 1 ? "night" : "nights"}
-                        </div>
-                        <div className="text-[10px]">Min stay</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Users className="size-3.5 text-primary shrink-0" />
-                      <div>
-                        <div className="font-medium text-foreground">Sleeps {property.max_guests}</div>
-                        <div className="text-[10px]">Max guests</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Bed className="size-3.5 text-primary shrink-0" />
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {property.bedrooms} BR / {property.bathrooms} BA
-                        </div>
-                        <div className="text-[10px]">Layout</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Layers className="size-3.5 text-primary shrink-0" />
-                      <div>
-                        <div className="font-medium text-foreground">Order: {property.sort_order}</div>
-                        <div className="text-[10px]">Sort order</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-wrap items-center gap-2 border-t md:border-t-0 border-border/50 pt-4 md:pt-0 shrink-0 self-stretch md:self-center justify-end">
-                  <button
-                    onClick={() => handleOpenPhotoManager(property.id, property.name)}
-                    className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
-                    style={{ minHeight: "44px" }}
-                  >
-                    <Image className="size-4 text-muted-foreground" />
-                    Manage photos
-                  </button>
-                  <button
-                    onClick={() => handleOpenEditForm(property)}
-                    className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
-                    style={{ minHeight: "44px" }}
-                  >
-                    <Edit2 className="size-4 text-muted-foreground" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleConfirmDelete(property.id, property.name)}
-                    className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive cursor-pointer"
-                    style={{ minHeight: "44px" }}
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </button>
-                </div>
+        {activeTab === "properties" ? (
+          <>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+              <div>
+                <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+                  Properties
+                </h1>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Manage your vacation rentals, pricing, and amenities.
+                </p>
               </div>
-            ))}
-          </div>
+              <button
+                onClick={handleOpenCreateForm}
+                className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition-all cursor-pointer"
+                style={{ minHeight: "44px" }}
+              >
+                <Plus className="size-4" />
+                Add property
+              </button>
+            </div>
+
+            {/* Properties List */}
+            {properties.length === 0 ? (
+              <div className="text-center rounded-2xl border border-dashed border-border bg-card p-12">
+                <Home className="mx-auto size-12 text-muted-foreground/50 mb-4" />
+                <h3 className="font-display text-lg font-medium text-foreground">No properties yet</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Get started by creating your first vacation rental property.
+                </p>
+                <button
+                  onClick={handleOpenCreateForm}
+                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 cursor-pointer"
+                  style={{ minHeight: "44px" }}
+                >
+                  <Plus className="size-4" />
+                  Add property
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6">
+                {properties.map((property) => (
+                  <div
+                    key={property.id}
+                    className="rounded-2xl border border-border bg-card p-5 md:p-6 shadow-soft hover:shadow-lift transition-all flex flex-col md:flex-row gap-5 justify-between"
+                  >
+                    <div className="flex-1 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
+                          {property.name}
+                        </h2>
+                        <span className="font-mono text-xs px-2 py-0.5 rounded bg-muted border border-border text-foreground">
+                          {property.slug}
+                        </span>
+                        {property.is_active ? (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800/50">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-muted-foreground">
+                        <span className="font-semibold text-foreground">{property.area}</span> &middot; {property.short_description}
+                      </p>
+
+                      {/* Facts Row */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 pt-2 border-t border-border/50 text-xs">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <DollarSign className="size-3.5 text-primary shrink-0" />
+                          <div>
+                            <div className="font-medium text-foreground">${property.base_rate}/night</div>
+                            <div className="text-[10px]">Base rate</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <DollarSign className="size-3.5 text-primary shrink-0" />
+                          <div>
+                            <div className="font-medium text-foreground">${property.cleaning_fee}</div>
+                            <div className="text-[10px]">Cleaning fee</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Calendar className="size-3.5 text-primary shrink-0" />
+                          <div>
+                            <div className="font-medium text-foreground">
+                              {property.min_nights} {property.min_nights === 1 ? "night" : "nights"}
+                            </div>
+                            <div className="text-[10px]">Min stay</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Users className="size-3.5 text-primary shrink-0" />
+                          <div>
+                            <div className="font-medium text-foreground">Sleeps {property.max_guests}</div>
+                            <div className="text-[10px]">Max guests</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Bed className="size-3.5 text-primary shrink-0" />
+                          <div>
+                            <div className="font-medium text-foreground">
+                              {property.bedrooms} BR / {property.bathrooms} BA
+                            </div>
+                            <div className="text-[10px]">Layout</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Layers className="size-3.5 text-primary shrink-0" />
+                          <div>
+                            <div className="font-medium text-foreground">Order: {property.sort_order}</div>
+                            <div className="text-[10px]">Sort order</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap items-center gap-2 border-t md:border-t-0 border-border/50 pt-4 md:pt-0 shrink-0 self-stretch md:self-center justify-end">
+                      <button
+                        onClick={() => handleOpenPhotoManager(property.id, property.name)}
+                        className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
+                        style={{ minHeight: "44px" }}
+                      >
+                        <Image className="size-4 text-muted-foreground" />
+                        Manage photos
+                      </button>
+                      <button
+                        onClick={() => handleOpenEditForm(property)}
+                        className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
+                        style={{ minHeight: "44px" }}
+                      >
+                        <Edit2 className="size-4 text-muted-foreground" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleConfirmDelete(property.id, property.name)}
+                        className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive cursor-pointer"
+                        style={{ minHeight: "44px" }}
+                      >
+                        <Trash2 className="size-4" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <BookingInbox accessToken={session?.access_token} properties={properties} />
         )}
       </main>
 

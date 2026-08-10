@@ -3,6 +3,7 @@ import { z } from "zod";
 import { propertyAssets } from "@/data/propertyAssets";
 
 export interface Property {
+  id: string;
   slug: string;
   name: string;
   area: string;
@@ -30,6 +31,7 @@ const mapRowToProperty = (row: any, dbPhotos: any[]): Property => {
     ? dbPhotos.map(mapDBPhotoToUIPhoto)
     : assets.photos;
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     area: row.area,
