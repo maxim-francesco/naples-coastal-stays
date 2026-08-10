@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#4FA3A5"/>
+  <g fill="none" stroke="#FBF9F6" stroke-width="3.2" stroke-linecap="round">
+    <!-- trunk -->
+    <path d="M32 46 C31 40 30 34 33 26" />
+    <!-- fronds -->
+    <path d="M33 25 C26 20 20 20 15 24" />
+    <path d="M33 25 C40 20 47 20 51 25" />
+    <path d="M33 25 C28 18 30 12 34 9" />
+    <path d="M33 25 C39 19 45 18 49 15" />
+    <path d="M33 25 C27 21 21 22 17 19" />
+  </g>
+  <!-- ground dot -->
+  <circle cx="32" cy="49" r="2.4" fill="#FBF9F6"/>
+</svg>
