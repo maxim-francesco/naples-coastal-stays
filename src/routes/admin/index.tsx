@@ -25,7 +25,9 @@ import {
   DollarSign,
   Calendar,
   Layers,
+  Image,
 } from "lucide-react";
+import { PhotoManagerDialog } from "@/components/admin/PhotoManagerDialog";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -224,6 +226,17 @@ function AdminDashboard() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Photo manager states
+  const [photoManagerOpen, setPhotoManagerOpen] = useState(false);
+  const [photoManagerPropertyId, setPhotoManagerPropertyId] = useState<string>("");
+  const [photoManagerPropertyName, setPhotoManagerPropertyName] = useState<string>("");
+
+  const handleOpenPhotoManager = (id: string, name: string) => {
+    setPhotoManagerPropertyId(id);
+    setPhotoManagerPropertyName(name);
+    setPhotoManagerOpen(true);
+  };
 
   const isEdit = !!propertyToEdit;
 
@@ -522,7 +535,15 @@ function AdminDashboard() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 border-t md:border-t-0 border-border/50 pt-4 md:pt-0 shrink-0 self-stretch md:self-center justify-end">
+                <div className="flex flex-wrap items-center gap-2 border-t md:border-t-0 border-border/50 pt-4 md:pt-0 shrink-0 self-stretch md:self-center justify-end">
+                  <button
+                    onClick={() => handleOpenPhotoManager(property.id, property.name)}
+                    className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
+                    style={{ minHeight: "44px" }}
+                  >
+                    <Image className="size-4 text-muted-foreground" />
+                    Manage photos
+                  </button>
                   <button
                     onClick={() => handleOpenEditForm(property)}
                     className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
@@ -814,6 +835,15 @@ function AdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Photo Manager Dialog */}
+      <PhotoManagerDialog
+        isOpen={photoManagerOpen}
+        onClose={() => setPhotoManagerOpen(false)}
+        propertyId={photoManagerPropertyId}
+        propertyName={photoManagerPropertyName}
+        accessToken={session?.access_token}
+      />
     </div>
   );
 }

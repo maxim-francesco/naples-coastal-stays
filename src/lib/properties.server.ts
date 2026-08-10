@@ -19,8 +19,16 @@ export interface Property {
   blackoutDates: { from: string; to: string }[];
 }
 
-const mapRowToProperty = (row: any): Property => {
+const mapDBPhotoToUIPhoto = (row: any) => ({
+  src: row.public_url,
+  alt: row.alt || "",
+});
+
+const mapRowToProperty = (row: any, dbPhotos: any[]): Property => {
   const assets = propertyAssets[row.slug] || { photos: [], blackoutDates: [] };
+  const photos = dbPhotos && dbPhotos.length > 0
+    ? dbPhotos.map(mapDBPhotoToUIPhoto)
+    : assets.photos;
   return {
     slug: row.slug,
     name: row.name,
@@ -34,7 +42,7 @@ const mapRowToProperty = (row: any): Property => {
     baseRate: row.base_rate,
     cleaningFee: row.cleaning_fee,
     amenities: row.amenities,
-    photos: assets.photos,
+    photos,
     blackoutDates: assets.blackoutDates,
   };
 };
@@ -53,7 +61,33 @@ export const getActiveProperties = createServerFn({ method: "GET" })
     }
 
     if (!data) return [];
-    return data.map(mapRowToProperty);
+
+    let photosByPropertyId: Record<string, any[]> = {};
+    if (data.length > 0) {
+      const ids = data.map((p) => p.id);
+      const { data: photosData, error: photosError } = await supabaseAdmin
+        .from("property_photos")
+        .select("property_id, public_url, alt, is_cover, sort_order")
+        .in("property_id", ids)
+        .order("is_cover", { ascending: false })
+        .order("sort_order", { ascending: true });
+
+      if (photosError) {
+        throw new Error(`Failed to fetch property photos: ${photosError.message}`);
+      }
+
+      if (photosData) {
+        for (const photo of photosData) {
+          const propId = photo.property_id;
+          if (!photosByPropertyId[propId]) {
+            photosByPropertyId[propId] = [];
+          }
+          photosByPropertyId[propId]!.push(photo);
+        }
+      }
+    }
+
+    return data.map((row) => mapRowToProperty(row, photosByPropertyId[row.id] || []));
   });
 
 export const getPropertyBySlug = createServerFn({ method: "GET" })
@@ -75,5 +109,17 @@ export const getPropertyBySlug = createServerFn({ method: "GET" })
     }
 
     if (!data) return null;
-    return mapRowToProperty(data);
+
+    const { data: photosData, error: photosError } = await supabaseAdmin
+      .from("property_photos")
+      .select("property_id, public_url, alt, is_cover, sort_order")
+      .eq("property_id", data.id)
+      .order("is_cover", { ascending: false })
+      .order("sort_order", { ascending: true });
+
+    if (photosError) {
+      throw new Error(`Failed to fetch property photos: ${photosError.message}`);
+    }
+
+    return mapRowToProperty(data, photosData || []);
   });
