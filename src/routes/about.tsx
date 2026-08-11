@@ -27,7 +27,7 @@ const rules = [
   { icon: Clock, title: "Check-out by 10:00 AM", body: "Late check-out is often possible — just ask." },
   { icon: Cigarette, title: "No smoking indoors", body: "Smoking is not permitted anywhere inside either home." },
   { icon: Moon, title: "Quiet hours 10 PM – 8 AM", body: "Both communities are residential and pleasantly quiet." },
-  { icon: PawPrint, title: "No pets", body: "We keep both homes allergy-friendly for every guest." },
+  { icon: PawPrint, title: "Small dogs welcome at Cathedral Heights", body: "Cathedral Heights is dog-friendly for small dogs; Turtle Lake is kept pet-free for allergy-sensitive guests." },
 ];
 
 function About() {

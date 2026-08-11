@@ -9,17 +9,17 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Palm & Sands — Two boutique vacation homes in Naples, FL" },
+      { title: "Palm & Sands — A private-pool home and a Turtle Lakes condo in Naples, FL" },
       {
         name: "description",
         content:
-          "Book two renovated coastal homes in Naples, Florida directly with the owner. Golf-course and water views, self check-in, best direct rates.",
+          "Book a private-pool home and a Turtle Lakes condo in Naples, Florida directly with the owner. Self check-in, best direct rates.",
       },
       { property: "og:title", content: "Palm & Sands — Naples, Florida vacation homes" },
       {
         property: "og:description",
         content:
-          "Two renovated coastal homes in Naples, Florida. Book direct with the owner for the best rate.",
+          "A private-pool home and a Turtle Lakes condo in Naples, Florida. Book direct with the owner for the best rate.",
       },
       { property: "og:type", content: "website" },
     ],
@@ -31,7 +31,7 @@ const trustPoints = [
   { icon: Sparkles, title: "Spotless & recently renovated", body: "Both homes were fully refreshed with new kitchens, baths and linens." },
   { icon: BadgePercent, title: "Best price, booked direct", body: "No platform service fees — you pay the owner's rate, nothing more." },
   { icon: KeyRound, title: "Self check-in", body: "Arrive whenever suits you with your own keyless entry code." },
-  { icon: Palmtree, title: "Golf-course & water views", body: "Screened lanais made for coffee mornings and long Gulf sunsets." },
+  { icon: Palmtree, title: "Private pool & community golf", body: "Screened lanais and spaces made for relaxing in the Florida sun." },
 ];
 
 const currency = (n: number) =>

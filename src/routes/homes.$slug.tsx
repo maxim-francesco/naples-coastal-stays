@@ -24,6 +24,14 @@ import {
   Bath as BathIcon,
   UtensilsCrossed,
   Check,
+  Umbrella,
+  Flame,
+  Fan,
+  DoorOpen,
+  Baby,
+  ShieldCheck,
+  Laptop,
+  ArrowUpDown,
 } from "lucide-react";
 
 const amenityIcons: Record<string, typeof Wifi> = {
@@ -41,6 +49,26 @@ const amenityIcons: Record<string, typeof Wifi> = {
   "Smart TV": Tv,
   "Self check-in": KeyRound,
   "Coffee maker": Coffee,
+
+  // New mappings for Cathedral Heights & Turtle Lake
+  "Pool": Waves,
+  "Shared pool": Waves,
+  "Beach access": Umbrella,
+  "Wifi": Wifi,
+  "Air conditioning": Snowflake,
+  "Kitchen": ChefHat,
+  "Indoor fireplace": Flame,
+  "Ceiling fan": Fan,
+  "TV with standard cable": Tv,
+  "HDTV with Netflix": Tv,
+  "Private entrance": DoorOpen,
+  "Crib": Baby,
+  "High chair": Baby,
+  "Smoke alarm": ShieldCheck,
+  "Dedicated workspace": Laptop,
+  "Elevator": ArrowUpDown,
+  "Bathtub": Bath,
+  "Dishwasher": WashingMachine,
 };
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
