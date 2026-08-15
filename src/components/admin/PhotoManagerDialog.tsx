@@ -407,6 +407,7 @@ export function PhotoManagerDialog({
                         onClick={() => handleSetCover(photo.id)}
                         disabled={photo.is_cover || actionInProgress}
                         className="flex items-center justify-center p-2 rounded-lg hover:bg-accent text-amber-500 disabled:text-muted-foreground/30 disabled:hover:bg-transparent min-h-[40px] cursor-pointer"
+                        aria-label="Set as cover"
                         title="Set as Cover"
                       >
                         <Star className={`size-4 ${photo.is_cover ? "fill-current" : ""}`} />
@@ -417,6 +418,7 @@ export function PhotoManagerDialog({
                         onClick={() => handleMove(index, "up")}
                         disabled={index === 0 || actionInProgress}
                         className="flex items-center justify-center p-2 rounded-lg hover:bg-accent text-foreground disabled:opacity-30 min-h-[40px] cursor-pointer"
+                        aria-label="Move up"
                         title="Move Up"
                       >
                         <ArrowUp className="size-4" />
@@ -427,6 +429,7 @@ export function PhotoManagerDialog({
                         onClick={() => handleMove(index, "down")}
                         disabled={index === photos.length - 1 || actionInProgress}
                         className="flex items-center justify-center p-2 rounded-lg hover:bg-accent text-foreground disabled:opacity-30 min-h-[40px] cursor-pointer"
+                        aria-label="Move down"
                         title="Move Down"
                       >
                         <ArrowDown className="size-4" />
@@ -437,6 +440,7 @@ export function PhotoManagerDialog({
                         onClick={() => handleDeleteClick(photo.id)}
                         disabled={actionInProgress}
                         className="flex items-center justify-center p-2 rounded-lg hover:bg-destructive/10 text-destructive disabled:opacity-50 min-h-[40px] cursor-pointer"
+                        aria-label="Delete photo"
                         title="Delete"
                       >
                         <Trash2 className="size-4" />

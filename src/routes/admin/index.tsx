@@ -180,6 +180,7 @@ function ListEditor({
                   onClick={() => handleMoveUp(index)}
                   disabled={index === 0}
                   className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 cursor-pointer"
+                  aria-label="Move up"
                   title="Move up"
                 >
                   <ArrowUp size={14} />
@@ -189,6 +190,7 @@ function ListEditor({
                   onClick={() => handleMoveDown(index)}
                   disabled={index === items.length - 1}
                   className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 cursor-pointer"
+                  aria-label="Move down"
                   title="Move down"
                 >
                   <ArrowDown size={14} />
@@ -197,6 +199,7 @@ function ListEditor({
                   type="button"
                   onClick={() => handleRemoveItem(index)}
                   className="p-1.5 text-destructive hover:bg-destructive/10 rounded cursor-pointer"
+                  aria-label="Delete line"
                   title="Delete line"
                 >
                   <X size={14} />
