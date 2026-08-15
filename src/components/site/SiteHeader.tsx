@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, Mail, Phone } from "lucide-react";
+import { Menu, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { siteConfig } from "@/lib/site-config";
 
 const linkClass =
   "text-sm text-foreground/75 transition-colors hover:text-foreground data-[status=active]:text-foreground";
@@ -49,9 +50,9 @@ export function SiteHeader({ properties = [] }: { properties?: PropertyLink[] })
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
         <Link to="/" className="font-display text-lg tracking-tight">
-          Palm &amp; Sands
+          {siteConfig.name}
           <span className="ml-2 hidden text-xs font-sans tracking-[0.2em] uppercase text-muted-foreground sm:inline">
-            Naples, FL
+            {siteConfig.tagline}
           </span>
         </Link>
 
@@ -67,8 +68,8 @@ export function SiteHeader({ properties = [] }: { properties?: PropertyLink[] })
           </SheetTrigger>
           <SheetContent side="right" className="flex w-[85%] max-w-sm flex-col p-0">
             <div className="px-6 pt-6 pb-5 pr-14">
-              <div className="font-display text-2xl tracking-tight text-foreground">Palm &amp; Sands</div>
-              <div className="mt-1.5 text-[0.7rem] uppercase tracking-[0.22em] text-primary">Naples, FL</div>
+              <div className="font-display text-2xl tracking-tight text-foreground">{siteConfig.name}</div>
+              <div className="mt-1.5 text-[0.7rem] uppercase tracking-[0.22em] text-primary-strong">{siteConfig.tagline}</div>
             </div>
             <div className="mx-6 h-px bg-border" />
             <nav className="flex-1 overflow-y-auto px-6 py-2">
@@ -108,15 +109,15 @@ export function SiteHeader({ properties = [] }: { properties?: PropertyLink[] })
             </nav>
             <div className="border-t border-border bg-primary/[0.06] px-6 pt-5 pb-6">
               <div className="flex items-center gap-2.5 text-sm text-foreground/75">
-                <Mail className="size-4 text-primary" /> stay@palmandsands.com
-              </div>
-              <div className="mt-2 flex items-center gap-2.5 text-sm text-foreground/75">
-                <Phone className="size-4 text-primary" /> +1 (239) 555-0147
+                <Phone className="size-4 text-primary" />
+                <a href={siteConfig.host.phoneHref} className="transition-colors hover:text-foreground">
+                  {siteConfig.host.phone}
+                </a>
               </div>
               <Link
                 to="/about"
                 onClick={() => setOpen(false)}
-                className="mt-4 block rounded-lg bg-primary py-3 text-center text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                className="mt-4 block rounded-lg bg-primary-strong py-3 text-center text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
                 Book direct
               </Link>

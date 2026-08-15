@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { propertyAssets } from "@/data/propertyAssets";
 
 export interface Property {
   id: string;
@@ -26,10 +25,9 @@ const mapDBPhotoToUIPhoto = (row: any) => ({
 });
 
 const mapRowToProperty = (row: any, dbPhotos: any[]): Property => {
-  const assets = propertyAssets[row.slug] || { photos: [], blackoutDates: [] };
   const photos = dbPhotos && dbPhotos.length > 0
     ? dbPhotos.map(mapDBPhotoToUIPhoto)
-    : assets.photos;
+    : [];
   return {
     id: row.id,
     slug: row.slug,
@@ -45,7 +43,7 @@ const mapRowToProperty = (row: any, dbPhotos: any[]): Property => {
     cleaningFee: row.cleaning_fee,
     amenities: row.amenities,
     photos,
-    blackoutDates: assets.blackoutDates,
+    blackoutDates: [],
   };
 };
 

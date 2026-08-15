@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { eachDayOfInterval, parseISO } from "date-fns";
+import { eachDayOfInterval, parseISO, startOfDay } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import {
   ArrowLeft,
@@ -88,7 +88,7 @@ export const Route = createFileRoute("/homes/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Home not found — Palm & Sands" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Home not found — Stay Naples" }, { name: "robots", content: "noindex" }],
       };
     }
     const { property } = loaderData;
@@ -119,6 +119,11 @@ function PropertyDetail() {
         eachDayOfInterval({ start: parseISO(b.from), end: parseISO(b.to) }),
       ),
     [property.blackoutDates],
+  );
+
+  const disabledMatchers = useMemo(
+    () => [{ before: startOfDay(new Date()) }, ...blocked],
+    [blocked],
   );
 
   const facts = [
@@ -202,7 +207,7 @@ function PropertyDetail() {
                 selected={range}
                 onSelect={setRange}
                 numberOfMonths={1}
-                disabled={[{ before: new Date() }, ...blocked]}
+                disabled={disabledMatchers}
                 className="pointer-events-auto sm:hidden"
               />
               <Calendar
@@ -210,7 +215,7 @@ function PropertyDetail() {
                 selected={range}
                 onSelect={setRange}
                 numberOfMonths={2}
-                disabled={[{ before: new Date() }, ...blocked]}
+                disabled={disabledMatchers}
                 className="pointer-events-auto hidden sm:block"
               />
             </div>
@@ -276,7 +281,7 @@ function PropertyDetail() {
           <Link
             to="/homes/$slug"
             params={{ slug: other.slug }}
-            className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-primary-strong px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
             View home
           </Link>

@@ -1,17 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock, Cigarette, Moon, Mail, Phone, MapPin, PawPrint } from "lucide-react";
+import { Clock, Cigarette, Moon, Phone, MapPin, PawPrint } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { siteConfig } from "@/lib/site-config";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About your host & house policies — Palm & Sands Naples" },
+      { title: `About your host & house policies — ${siteConfig.name}` },
       {
         name: "description",
         content:
           "Meet the owner of two Naples, Florida vacation homes, read the house rules and check-in policies, and get in touch directly.",
       },
-      { property: "og:title", content: "About your host — Palm & Sands, Naples FL" },
+      { property: "og:title", content: `About your host — ${siteConfig.name}, Naples FL` },
       {
         property: "og:description",
         content: "Host story, house rules and direct contact for two Naples vacation homes.",
@@ -42,9 +43,9 @@ function About() {
         </div>
         <div className="space-y-4 text-muted-foreground">
           <p>
-            We've been welcoming guests to Naples for over a decade. What started as one condo we
-            couldn't bear to leave empty has become two homes we look after personally — no
-            management company, no call centre.
+            {siteConfig.host.name} has been welcoming guests to Naples for over a decade.
+            What started as one condo she couldn't bear to leave empty has become two homes she
+            looks after personally — no management company, no call centre.
           </p>
           <p>
             Every stay is prepared by the same small local team: fresh linens, a stocked coffee
@@ -72,20 +73,13 @@ function About() {
 
       <h2 className="text-3xl">Get in touch</h2>
       <p className="mt-3 text-muted-foreground">
-        Questions about dates, longer winter stays or the neighbourhood? Write any time — we reply
-        within 24 hours.
+        Questions about dates, longer winter stays or the neighbourhood? Give us a call — we're happy to help.
       </p>
       <ul className="mt-6 space-y-3 text-sm">
         <li className="flex items-center gap-3">
-          <Mail className="size-4 text-primary" />
-          <a href="mailto:stay@palmandsands.com" className="hover:underline">
-            stay@palmandsands.com
-          </a>
-        </li>
-        <li className="flex items-center gap-3">
           <Phone className="size-4 text-primary" />
-          <a href="tel:+12395550147" className="hover:underline">
-            +1 (239) 555-0147
+          <a href={siteConfig.host.phoneHref} className="hover:underline">
+            {siteConfig.host.phone}
           </a>
         </li>
         <li className="flex items-center gap-3">

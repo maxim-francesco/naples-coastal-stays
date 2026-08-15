@@ -18,6 +18,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { getActiveProperties } from "@/lib/properties.server";
 
 
+import { siteConfig } from "@/lib/site-config";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -30,7 +32,7 @@ function NotFoundComponent() {
         <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md bg-primary-strong px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-strong/90"
           >
             Go home
           </Link>
@@ -59,7 +61,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md bg-primary-strong px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-strong/90"
           >
             Try again
           </button>
@@ -80,20 +82,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Palm & Sands — Naples, Florida vacation homes" },
+      { title: `${siteConfig.name} — Naples, Florida vacation homes` },
       {
         name: "description",
-        content: "Two boutique vacation homes in Naples, Florida, booked direct with the owner.",
+        content: siteConfig.description,
       },
-      { name: "author", content: "Palm & Sands" },
+      { name: "author", content: siteConfig.name },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://naples-coastal-stays.vercel.app/" },
-      { property: "og:site_name", content: "Palm & Sands" },
-      { property: "og:image", content: "https://naples-coastal-stays.vercel.app/og-image.jpg" },
+      { property: "og:url", content: `${siteConfig.url}/` },
+      { property: "og:site_name", content: siteConfig.name },
+      { property: "og:image", content: siteConfig.ogImage },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://naples-coastal-stays.vercel.app/og-image.jpg" },
+      { name: "twitter:image", content: siteConfig.ogImage },
     ],
     links: [
       {

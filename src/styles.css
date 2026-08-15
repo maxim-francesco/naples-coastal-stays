@@ -29,6 +29,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -79,6 +80,7 @@
 
   /* #4FA3A5 aqua accent */
   --primary: oklch(0.652 0.068 195.5);
+  --primary-strong: oklch(0.50 0.075 195.5);
   --primary-foreground: oklch(0.995 0.003 85);
 
   --secondary: oklch(0.945 0.012 84);
@@ -124,6 +126,7 @@
   --popover: oklch(0.26 0.008 80);
   --popover-foreground: oklch(0.96 0.006 85);
   --primary: oklch(0.7 0.075 195.5);
+  --primary-strong: oklch(0.78 0.07 195.5);
   --primary-foreground: oklch(0.2 0.01 195);
   --secondary: oklch(0.3 0.01 80);
   --secondary-foreground: oklch(0.96 0.006 85);

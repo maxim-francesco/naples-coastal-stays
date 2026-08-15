@@ -9,13 +9,13 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Palm & Sands — A private-pool home and a Turtle Lakes condo in Naples, FL" },
+      { title: "Stay Naples — A private-pool home and a Turtle Lakes condo in Naples, FL" },
       {
         name: "description",
         content:
           "Book a private-pool home and a Turtle Lakes condo in Naples, Florida directly with the owner. Self check-in, best direct rates.",
       },
-      { property: "og:title", content: "Palm & Sands — Naples, Florida vacation homes" },
+      { property: "og:title", content: "Stay Naples — Naples, Florida vacation homes" },
       {
         property: "og:description",
         content:
@@ -111,7 +111,7 @@ function Home() {
                     <span className="font-display text-xl">{currency(property.baseRate)}</span>
                     <span className="text-muted-foreground"> / night</span>
                   </p>
-                  <span className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity group-hover:opacity-90">
+                  <span className="rounded-full bg-primary-strong px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity group-hover:opacity-90">
                     View home
                   </span>
                 </div>

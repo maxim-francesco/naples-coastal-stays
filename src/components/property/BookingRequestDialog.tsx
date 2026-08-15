@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays, format, startOfDay } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { CalendarDays, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,11 @@ export function BookingRequestDialog({
   const [message, setMessage] = useState("");
   const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const disabledMatchers = useMemo(
+    () => [{ before: startOfDay(new Date()) }, ...disabledDates],
+    [disabledDates],
+  );
 
   const nights =
     stay?.from && stay?.to ? Math.max(0, differenceInCalendarDays(stay.to, stay.from)) : 0;
@@ -153,7 +158,7 @@ export function BookingRequestDialog({
                     selected={stay}
                     onSelect={setStay}
                     numberOfMonths={1}
-                    disabled={[{ before: new Date() }, ...disabledDates]}
+                    disabled={disabledMatchers}
                     className="pointer-events-auto mx-auto"
                   />
                 </div>
