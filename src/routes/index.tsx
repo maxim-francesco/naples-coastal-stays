@@ -3,6 +3,7 @@ import { BedDouble, Bath, Users, Sparkles, KeyRound, BadgePercent, Palmtree } fr
 import heroImage from "@/assets/hero-coastal.jpg";
 import { getActiveProperties } from "@/lib/properties.server";
 import { siteConfig, absoluteUrl } from "@/lib/site-config";
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -74,13 +75,45 @@ const currency = (n: number) =>
 function Home() {
   const properties = Route.useLoaderData();
 
+  let heroPhoto: { src: string; alt: string; isHero?: boolean; isCover?: boolean } | null = null;
+  let owningProperty: (typeof properties)[number] | null = null;
+
+  for (const prop of properties) {
+    const found = prop.photos.find((p) => p.isHero);
+    if (found) {
+      heroPhoto = found;
+      owningProperty = prop;
+      break;
+    }
+  }
+
+  if (!heroPhoto && properties.length > 0) {
+    const firstProp = properties[0]!;
+    const cover = firstProp.photos.find((p) => p.isCover) || firstProp.photos[0];
+    if (cover) {
+      heroPhoto = cover;
+      owningProperty = firstProp;
+    }
+  }
+
+  const heroSrc = heroPhoto?.src ?? heroImage;
+  const heroAlt = owningProperty
+    ? `${owningProperty.name} in ${owningProperty.area}`
+    : "Coastal vacation home in Naples, Florida";
+
   return (
     <>
       <section className="relative">
         <div className="relative h-[78vh] min-h-[520px] w-full overflow-hidden">
-          <img
-            src={heroImage}
-            alt="Sunlit coastal terrace with palms and the Gulf of Mexico beyond"
+          <CloudinaryImage
+            src={heroSrc}
+            alt={heroAlt}
+            priority
+            widths={[640, 828, 1200, 1600, 1920]}
+            sizes="100vw"
+            aspectRatio="16:9"
+            crop="fill"
+            gravity="auto:subject"
             width={1920}
             height={1088}
             className="h-full w-full object-cover"
@@ -114,10 +147,14 @@ function Home() {
               className="group block overflow-hidden rounded-2xl bg-card shadow-soft transition-shadow duration-500 hover:shadow-lift"
             >
               <div className="overflow-hidden">
-                <img
+                <CloudinaryImage
                   src={property.photos[0]!.src}
                   alt={property.photos[0]!.alt}
-                  loading="lazy"
+                  widths={[350, 528, 700, 1056]}
+                  sizes="(min-width: 768px) 528px, 350px"
+                  aspectRatio="3:2"
+                  crop="fill"
+                  gravity="auto"
                   width={1600}
                   height={1104}
                   className="h-72 w-full object-cover transition-transform duration-700 group-hover:scale-[1.05] sm:h-80"

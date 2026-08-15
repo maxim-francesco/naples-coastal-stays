@@ -15,13 +15,15 @@ export interface Property {
   baseRate: number;
   cleaningFee: number;
   amenities: string[];
-  photos: { src: string; alt: string }[];
+  photos: { src: string; alt: string; isCover?: boolean; isHero?: boolean }[];
   blackoutDates: { from: string; to: string }[];
 }
 
 const mapDBPhotoToUIPhoto = (row: any) => ({
   src: row.public_url,
   alt: row.alt || "",
+  isCover: !!row.is_cover,
+  isHero: !!row.is_hero,
 });
 
 const mapRowToProperty = (row: any, dbPhotos: any[]): Property => {
@@ -67,7 +69,7 @@ export const getActiveProperties = createServerFn({ method: "GET" })
       const ids = data.map((p) => p.id);
       const { data: photosData, error: photosError } = await supabaseAdmin
         .from("property_photos")
-        .select("property_id, public_url, alt, is_cover, sort_order")
+        .select("property_id, public_url, alt, is_cover, is_hero, sort_order")
         .in("property_id", ids)
         .order("is_cover", { ascending: false })
         .order("sort_order", { ascending: true });
@@ -112,7 +114,7 @@ export const getPropertyBySlug = createServerFn({ method: "GET" })
 
     const { data: photosData, error: photosError } = await supabaseAdmin
       .from("property_photos")
-      .select("property_id, public_url, alt, is_cover, sort_order")
+      .select("property_id, public_url, alt, is_cover, is_hero, sort_order")
       .eq("property_id", data.id)
       .order("is_cover", { ascending: false })
       .order("sort_order", { ascending: true });
