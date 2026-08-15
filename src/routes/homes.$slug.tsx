@@ -75,6 +75,7 @@ import { Separator } from "@/components/ui/separator";
 import { PhotoGallery } from "@/components/property/PhotoGallery";
 import { BookingRequestDialog } from "@/components/property/BookingRequestDialog";
 import { getPropertyBySlug, getActiveProperties, type Property } from "@/lib/properties.server";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
 
 export const Route = createFileRoute("/homes/$slug")({
   loader: async ({ params }): Promise<{ property: Property; activeProperties: Property[] }> => {
@@ -93,13 +94,75 @@ export const Route = createFileRoute("/homes/$slug")({
     }
     const { property } = loaderData;
     const title = `${property.name} — Naples, FL vacation rental`;
+    const description = property.shortDescription.slice(0, 155);
+    const canonical = absoluteUrl(`/homes/${property.slug}`);
+
+    const jsonLdVacationRental = {
+      "@context": "https://schema.org",
+      "@type": "VacationRental",
+      name: property.name,
+      description: property.shortDescription,
+      url: canonical,
+      image: property.photos.map((p) => p.src),
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Naples",
+        addressRegion: "FL",
+        addressCountry: "US",
+      },
+      numberOfRooms: property.bedrooms,
+      occupancy: {
+        "@type": "QuantitativeValue",
+        maxValue: property.maxGuests,
+      },
+      amenityFeature: property.amenities.map((amenity) => ({
+        "@type": "LocationFeatureSpecification",
+        name: amenity,
+        value: true,
+      })),
+      priceRange: `$${property.baseRate}-$${property.baseRate + property.cleaningFee}`,
+    };
+
+    const jsonLdBreadcrumbs = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: absoluteUrl("/"),
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: property.name,
+          item: canonical,
+        },
+      ],
+    };
+
     return {
       meta: [
         { title },
-        { name: "description", content: property.shortDescription.slice(0, 155) },
+        { name: "description", content: description },
         { property: "og:title", content: title },
-        { property: "og:description", content: property.shortDescription.slice(0, 155) },
-        { property: "og:type", content: "article" },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLdVacationRental),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLdBreadcrumbs),
+        },
       ],
     };
   },

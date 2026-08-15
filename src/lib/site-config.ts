@@ -8,6 +8,7 @@ export const siteConfig = {
     name: "Eugenia Bucur Grecu",
     phone: "+1 (239) 571-4461",
     phoneHref: "tel:+12395714461",
+    phoneE164: "+12395714461",
   },
   location: {
     city: "Naples",
@@ -20,3 +21,9 @@ export const siteConfig = {
 export function absoluteUrl(path: string): string {
   return new URL(path, siteConfig.url).href;
 }
+
+export const legacySlugRedirects: Record<string, string> = {
+  "palm-breeze-retreat": "cathedral-heights",
+  "aqua-sands-suite": "turtle-lake",
+};
+

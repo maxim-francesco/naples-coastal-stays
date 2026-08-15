@@ -2,28 +2,62 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BedDouble, Bath, Users, Sparkles, KeyRound, BadgePercent, Palmtree } from "lucide-react";
 import heroImage from "@/assets/hero-coastal.jpg";
 import { getActiveProperties } from "@/lib/properties.server";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
     return getActiveProperties();
   },
-  head: () => ({
-    meta: [
-      { title: "Stay Naples — A private-pool home and a Turtle Lakes condo in Naples, FL" },
-      {
-        name: "description",
-        content:
-          "Book a private-pool home and a Turtle Lakes condo in Naples, Florida directly with the owner. Self check-in, best direct rates.",
+  head: () => {
+    const canonical = absoluteUrl("/");
+    const ogTitle = "Stay Naples — Naples, Florida vacation homes";
+    const ogDescription =
+      "A private-pool home and a Turtle Lakes condo in Naples, Florida. Book direct with the owner for the best rate.";
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: siteConfig.ogImage,
+      image: siteConfig.ogImage,
+      telephone: siteConfig.host.phoneE164,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Naples",
+        addressRegion: "FL",
+        addressCountry: "US",
       },
-      { property: "og:title", content: "Stay Naples — Naples, Florida vacation homes" },
-      {
-        property: "og:description",
-        content:
-          "A private-pool home and a Turtle Lakes condo in Naples, Florida. Book direct with the owner for the best rate.",
+      areaServed: {
+        "@type": "AdministrativeArea",
+        name: "Naples, FL",
       },
-      { property: "og:type", content: "website" },
-    ],
-  }),
+    };
+
+    return {
+      meta: [
+        { title: "Stay Naples — A private-pool home and a Turtle Lakes condo in Naples, FL" },
+        {
+          name: "description",
+          content:
+            "Book a private-pool home and a Turtle Lakes condo in Naples, Florida directly with the owner. Self check-in, best direct rates.",
+        },
+        { property: "og:title", content: ogTitle },
+        { property: "og:description", content: ogDescription },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:title", content: ogTitle },
+        { name: "twitter:description", content: ogDescription },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLd),
+        },
+      ],
+    };
+  },
   component: Home,
 });
 

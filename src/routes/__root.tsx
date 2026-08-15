@@ -89,7 +89,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "author", content: siteConfig.name },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: `${siteConfig.url}/` },
       { property: "og:site_name", content: siteConfig.name },
       { property: "og:image", content: siteConfig.ogImage },
       { property: "og:image:width", content: "1200" },

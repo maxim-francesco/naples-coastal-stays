@@ -1,25 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Clock, Cigarette, Moon, Phone, MapPin, PawPrint } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig, absoluteUrl } from "@/lib/site-config";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: `About your host & house policies — ${siteConfig.name}` },
-      {
-        name: "description",
-        content:
-          "Meet the owner of two Naples, Florida vacation homes, read the house rules and check-in policies, and get in touch directly.",
-      },
-      { property: "og:title", content: `About your host — ${siteConfig.name}, Naples FL` },
-      {
-        property: "og:description",
-        content: "Host story, house rules and direct contact for two Naples vacation homes.",
-      },
-      { property: "og:type", content: "website" },
-    ],
-  }),
+  head: () => {
+    const canonical = absoluteUrl("/about");
+    const ogTitle = `About your host — ${siteConfig.name}, Naples FL`;
+    const ogDescription = "Host story, house rules and direct contact for two Naples vacation homes.";
+
+    return {
+      meta: [
+        { title: `About your host & house policies — ${siteConfig.name}` },
+        {
+          name: "description",
+          content:
+            "Meet the owner of two Naples, Florida vacation homes, read the house rules and check-in policies, and get in touch directly.",
+        },
+        { property: "og:title", content: ogTitle },
+        { property: "og:description", content: ogDescription },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:title", content: ogTitle },
+        { name: "twitter:description", content: ogDescription },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
   component: About,
 });
 

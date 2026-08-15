@@ -5,6 +5,12 @@ import { Loader2, Palmtree } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/login")({
+  head: () => ({
+    meta: [
+      { title: "Admin login — Stay Naples" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminLogin,
 });
 

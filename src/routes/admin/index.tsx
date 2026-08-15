@@ -50,6 +50,12 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/")({
+  head: () => ({
+    meta: [
+      { title: "Admin — Stay Naples" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   loader: async () => {
     const properties = await listAllPropertiesAdmin();
     return { properties };
