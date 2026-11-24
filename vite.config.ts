@@ -7,6 +7,16 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // The wrapper injects every VITE_* value into import.meta.env by default,
+  // bypassing envPrefix. Disable that injection so Vite's own envPrefix below
+  // is authoritative and only browser-safe values reach the client bundle.
+  envDefine: false,
+  vite: {
+    // Only browser-safe values may reach the client bundle. Narrowing the
+    // prefix keeps development-only credentials such as VITE_DEV_ADMIN_* out
+    // of `import.meta.env`, which TanStack Start serializes into client code.
+    envPrefix: ["VITE_SUPABASE_", "VITE_CLOUDINARY_"],
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
