@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   listPropertyPhotos,
-  getSignedUploadParams,
+  getUploadTicket,
   savePropertyPhoto,
   deletePropertyPhoto,
   setCoverPhoto,
   reorderPhotos,
   type DBPhoto,
+  type PhotoStorageOutcome,
 } from "@/lib/adminPhotos.server";
 import {
   Loader2,
@@ -19,12 +20,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -35,6 +31,10 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+
+function messageOf(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 interface PhotoManagerDialogProps {
   isOpen: boolean;
@@ -51,6 +51,40 @@ interface UploadStatus {
   error?: string | undefined;
 }
 
+// Must stay in step with the types the server accepts.
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+// What the administrator is told after a photo is removed, depending on what
+// happened to its stored file.
+const REMOVED_MESSAGES: Record<PhotoStorageOutcome, { kind: "success" | "warning"; text: string }> =
+  {
+    deleted: { kind: "success", text: "Photo deleted." },
+    none: { kind: "success", text: "Photo deleted." },
+    "legacy-kept": {
+      kind: "success",
+      text: "Photo removed from the site. Its original is kept in the previous storage until the photo migration is finalized.",
+    },
+    "shared-kept": {
+      kind: "success",
+      text: "Photo removed. Its file is still used by another photo and was kept.",
+    },
+    "cleanup-pending": {
+      kind: "warning",
+      text: "Photo removed from the site, but its file could not be deleted from storage yet.",
+    },
+  };
+
+// Turns a failed transfer into something an administrator can act on.
+function describeUploadFailure(status: number): string {
+  if (status === 0) {
+    return "The browser blocked the upload before it reached storage. Check that the storage bucket allows this site (CORS).";
+  }
+  if (status === 403) {
+    return "Storage rejected the upload link (HTTP 403). It may have expired — please try again.";
+  }
+  return `Storage rejected the upload (HTTP ${status}).`;
+}
+
 export function PhotoManagerDialog({
   isOpen,
   onClose,
@@ -62,6 +96,7 @@ export function PhotoManagerDialog({
   const [loading, setLoading] = useState(false);
   const [actionInProgress, setActionInProgress] = useState(false);
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
+  const [progress, setProgress] = useState(0);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,9 +106,12 @@ export function PhotoManagerDialog({
     if (!propertyId) return;
     setLoading(true);
     try {
-      const data = await listPropertyPhotos({ data: { propertyId } });
+      const data = await listPropertyPhotos({
+        data: { propertyId },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       setPhotos(data);
-    } catch (e: any) {
+    } catch (e) {
       console.error("Failed to load photos:", e);
       toast.error("Failed to load photos.");
     } finally {
@@ -93,7 +131,7 @@ export function PhotoManagerDialog({
     setActionInProgress(true);
     try {
       const res = await setCoverPhoto({
-        data: { id: photoId, propertyId, accessToken },
+        data: { id: photoId, propertyId },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (res.ok) {
@@ -102,9 +140,9 @@ export function PhotoManagerDialog({
       } else {
         toast.error(res.error || "Failed to update cover photo.");
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      toast.error(e.message || "An error occurred.");
+      toast.error(messageOf(e, "An error occurred."));
     } finally {
       setActionInProgress(false);
     }
@@ -127,7 +165,7 @@ export function PhotoManagerDialog({
       const orderedIds = reordered.map((p) => p.id);
 
       const res = await reorderPhotos({
-        data: { propertyId, orderedIds, accessToken },
+        data: { propertyId, orderedIds },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
@@ -137,9 +175,9 @@ export function PhotoManagerDialog({
         toast.error(res.error || "Failed to update photo order.");
         await fetchPhotos();
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      toast.error(e.message || "An error occurred.");
+      toast.error(messageOf(e, "An error occurred."));
       await fetchPhotos();
     } finally {
       setActionInProgress(false);
@@ -157,18 +195,20 @@ export function PhotoManagerDialog({
     setActionInProgress(true);
     try {
       const res = await deletePropertyPhoto({
-        data: { id: confirmDeleteId, accessToken },
+        data: { id: confirmDeleteId },
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (res.ok) {
-        toast.success("Photo deleted.");
+        const message = REMOVED_MESSAGES[res.storage] ?? REMOVED_MESSAGES.deleted;
+        if (message.kind === "warning") toast.warning(message.text);
+        else toast.success(message.text);
         await fetchPhotos();
       } else {
         toast.error(res.error || "Failed to delete photo.");
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      toast.error(e.message || "An error occurred.");
+      toast.error(messageOf(e, "An error occurred."));
     } finally {
       setActionInProgress(false);
       setConfirmDeleteId(null);
@@ -205,59 +245,68 @@ export function PhotoManagerDialog({
 
       const updateStatus = (status: UploadStatus["status"], error?: string | undefined) => {
         setUploads((prev) =>
-          prev.map((up) => (up.id === uploadStatus.id ? { ...up, status, error } : up))
+          prev.map((up) => (up.id === uploadStatus.id ? { ...up, status, error } : up)),
         );
       };
 
       try {
-        // 1. Get Signature
-        const signRes = await getSignedUploadParams({
-          data: { propertyId, accessToken },
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          throw new Error("Only JPEG, PNG, WebP, or GIF images are supported.");
+        }
+
+        // 1. Authorized presigned ticket. R2 credentials never reach the browser.
+        const ticketRes = await getUploadTicket({
+          data: {
+            propertyId,
+            contentType: file.type,
+            byteSize: file.size,
+          },
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
-        if (!signRes.ok) {
-          throw new Error(signRes.error || "Failed to get signed upload parameters.");
+        if (!ticketRes.ok) {
+          throw new Error(ticketRes.error || "Failed to obtain an upload ticket.");
         }
 
-        const { signature, timestamp, apiKey, cloudName, folder } = signRes.data;
+        const ticket = ticketRes.data;
 
-        // 2. Upload directly to Cloudinary
+        // 2. Upload the original directly to the private/public R2 namespace.
         updateStatus("uploading");
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("api_key", apiKey);
-        formData.append("timestamp", timestamp.toString());
-        formData.append("signature", signature);
-        formData.append("folder", folder);
-
-        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-        console.log(`POSTing to Cloudinary: ${cloudinaryUrl} (api_key: ${apiKey}, signature length: ${signature.length})`);
-        
-        const response = await fetch(cloudinaryUrl, {
-          method: "POST",
-          body: formData,
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open(ticket.method || "PUT", ticket.uploadUrl, true);
+          for (const [header, headerValue] of Object.entries(ticket.headers || {})) {
+            xhr.setRequestHeader(header, headerValue);
+          }
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              setProgress(Math.round((event.loaded / event.total) * 100));
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(describeUploadFailure(xhr.status)));
+            }
+          };
+          xhr.onerror = () =>
+            reject(
+              new Error(
+                "Could not reach the storage bucket. Check that the bucket allows this site (CORS) and that the connection is working.",
+              ),
+            );
+          xhr.send(file);
         });
 
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error?.message || "Cloudinary upload failed.");
-        }
-
-        const cloudinaryData = await response.json();
-        const { public_id, secure_url } = cloudinaryData;
-
-        console.log("Cloudinary upload successful:", { public_id, secure_url });
-
-        // 3. Save photo to Supabase DB
+        // 3. The server verifies size, MIME and magic bytes before persistence.
         updateStatus("saving");
         const dbRes = await savePropertyPhoto({
           data: {
             propertyId,
-            publicId: public_id,
-            secureUrl: secure_url,
+            key: ticket.key,
+            mimeType: file.type,
             alt: file.name,
-            accessToken,
           },
           headers: { Authorization: `Bearer ${accessToken}` },
         });
@@ -268,9 +317,9 @@ export function PhotoManagerDialog({
 
         updateStatus("done");
         successCount++;
-      } catch (err: any) {
+      } catch (err) {
         console.error("Upload error for file:", file.name, err);
-        updateStatus("error", err.message || "Unknown error occurred.");
+        updateStatus("error", messageOf(err, "Unknown error occurred."));
         failCount++;
       }
     }
@@ -294,16 +343,19 @@ export function PhotoManagerDialog({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 flex flex-col gap-4 font-sans bg-card text-foreground">
           <DialogHeader className="flex flex-row items-center justify-between border-b border-border pb-3 shrink-0">
             <div>
               <DialogTitle className="text-xl md:text-2xl font-display font-bold tracking-tight">
                 Manage Photos
               </DialogTitle>
-              <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                {propertyName}
-              </p>
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{propertyName}</p>
             </div>
           </DialogHeader>
 
@@ -313,7 +365,7 @@ export function PhotoManagerDialog({
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept="image/*"
+              accept={ALLOWED_IMAGE_TYPES.join(",")}
               multiple
               className="hidden"
             />
@@ -330,37 +382,39 @@ export function PhotoManagerDialog({
 
           {/* Upload Status Overlay/List */}
           {uploads.length > 0 && (
-            <div className="bg-muted/40 border border-border rounded-xl p-3 max-h-[120px] overflow-y-auto space-y-1.5 text-xs">
+            <div
+              className="bg-muted/40 border border-border rounded-xl p-3 max-h-[200px] overflow-y-auto space-y-2 text-xs"
+              aria-live="polite"
+            >
               {uploads.map((up) => (
-                <div key={up.id} className="flex items-center justify-between gap-2">
-                  <span className="truncate max-w-[200px] sm:max-w-xs text-muted-foreground">
-                    {up.fileName}
-                  </span>
-                  <div className="flex items-center gap-1.5 font-medium shrink-0">
-                    {up.status === "signing" && (
-                      <span className="text-primary flex items-center gap-1">
-                        <Loader2 className="size-3 animate-spin" /> Signing...
-                      </span>
-                    )}
-                    {up.status === "uploading" && (
-                      <span className="text-amber-500 flex items-center gap-1">
-                        <Loader2 className="size-3 animate-spin" /> Uploading...
-                      </span>
-                    )}
-                    {up.status === "saving" && (
-                      <span className="text-blue-500 flex items-center gap-1">
-                        <Loader2 className="size-3 animate-spin" /> Saving...
-                      </span>
-                    )}
-                    {up.status === "done" && (
-                      <span className="text-emerald-600">Done</span>
-                    )}
-                    {up.status === "error" && (
-                      <span className="text-destructive" title={up.error}>
-                        Error
-                      </span>
-                    )}
+                <div key={up.id} className="space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate max-w-[200px] sm:max-w-xs text-muted-foreground">
+                      {up.fileName}
+                    </span>
+                    <div className="flex items-center gap-1.5 font-medium shrink-0">
+                      {up.status === "signing" && (
+                        <span className="text-primary flex items-center gap-1">
+                          <Loader2 className="size-3 animate-spin" /> Preparing...
+                        </span>
+                      )}
+                      {up.status === "uploading" && (
+                        <span className="text-amber-500 flex items-center gap-1">
+                          <Loader2 className="size-3 animate-spin" /> Uploading...
+                        </span>
+                      )}
+                      {up.status === "saving" && (
+                        <span className="text-blue-500 flex items-center gap-1">
+                          <Loader2 className="size-3 animate-spin" /> Saving...
+                        </span>
+                      )}
+                      {up.status === "done" && <span className="text-emerald-600">Done</span>}
+                      {up.status === "error" && <span className="text-destructive">Error</span>}
+                    </div>
                   </div>
+                  {up.status === "error" && up.error && (
+                    <p className="break-words text-foreground/90">{up.error}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -467,7 +521,8 @@ export function PhotoManagerDialog({
               Delete Photo?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-muted-foreground">
-              Are you sure you want to delete this photo? This will permanently remove it from both Cloudinary and the database.
+              Are you sure you want to delete this photo? It will be removed from this site
+              immediately. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-2">

@@ -1,3 +1,6 @@
+// Transformations for photos that live on Cloudinary. Cloudflare R2 serves
+// files as they were uploaded, so a URL that is not a Cloudinary upload URL is
+// always returned untouched: nothing is assumed about the storage behind it.
 export interface CloudinaryOptions {
   width?: number | undefined;
   height?: number | undefined;
@@ -8,11 +11,15 @@ export interface CloudinaryOptions {
   format?: string | undefined;
 }
 
+// True only for Cloudinary upload URLs. R2 public URLs, Cloudinary "fetch"
+// URLs and local assets are all left alone by the helpers below.
 export function isCloudinaryUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
   return url.includes("res.cloudinary.com") && url.includes("/image/upload/");
 }
 
+// Adds a transformation segment to a Cloudinary upload URL. URLs that already
+// carry one, and every non-Cloudinary URL, are returned unchanged.
 export function cloudinaryUrl(url: string, opts: CloudinaryOptions = {}): string {
   if (!isCloudinaryUrl(url)) return url;
 
