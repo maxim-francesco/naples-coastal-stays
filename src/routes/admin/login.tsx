@@ -51,32 +51,6 @@ function AdminLogin() {
     }
   };
 
-  const handleQuickLogin = async () => {
-    const devEmail = import.meta.env['VITE_DEV_ADMIN_EMAIL'];
-    const devPassword = import.meta.env['VITE_DEV_ADMIN_PASSWORD'];
-
-    if (!devEmail || !devPassword) {
-      toast.error("Dev credentials not set in .env.local");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const { data, error } = await signIn(devEmail, devPassword);
-      if (error) {
-        toast.error("Incorrect email or password.");
-      } else {
-        toast.success("Signed in successfully!");
-        navigate({ to: "/admin" });
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An unexpected error occurred.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -145,29 +119,8 @@ function AdminLogin() {
               className="group relative flex w-full justify-center items-center rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 font-sans"
               style={{ minHeight: "52px" }}
             >
-              {submitting ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                "Sign in"
-              )}
+              {submitting ? <Loader2 className="size-5 animate-spin" /> : "Sign in"}
             </button>
-
-            {import.meta.env.DEV && (
-              <div className="space-y-2 pt-2 border-t border-border/50">
-                <button
-                  type="button"
-                  onClick={handleQuickLogin}
-                  disabled={submitting}
-                  className="group relative flex w-full justify-center items-center rounded-xl bg-secondary hover:bg-secondary/80 border border-border px-4 py-3.5 text-sm font-semibold text-secondary-foreground shadow-sm disabled:opacity-50 font-sans transition-colors"
-                  style={{ minHeight: "52px" }}
-                >
-                  Quick Login (dev)
-                </button>
-                <p className="text-center text-xs text-muted-foreground font-sans">
-                  Development only — hidden in production.
-                </p>
-              </div>
-            )}
           </div>
         </form>
       </div>
