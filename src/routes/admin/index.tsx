@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import React, { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import {
   listAllPropertiesAdmin,
@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { PhotoManagerDialog } from "@/components/admin/PhotoManagerDialog";
 import { BookingInbox } from "@/components/admin/BookingInbox";
+import { AvailabilityCalendar } from "@/components/admin/AvailabilityCalendar";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -51,15 +52,8 @@ import {
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
-    meta: [
-      { title: "Admin — Stay Naples" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+    meta: [{ title: "Admin — Stay Naples" }, { name: "robots", content: "noindex, nofollow" }],
   }),
-  loader: async () => {
-    const properties = await listAllPropertiesAdmin();
-    return { properties };
-  },
   component: AdminDashboard,
 });
 
@@ -214,10 +208,38 @@ function ListEditor({
 }
 
 function AdminDashboard() {
-  const { properties } = Route.useLoaderData();
   const { session, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const router = useRouter();
+
+  // Properties are loaded on the client with the signed-in session, never by a
+  // route loader: a loader runs without the caller's credentials.
+  const [properties, setProperties] = useState<DBProperty[]>([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
+  const [propertiesError, setPropertiesError] = useState<string | null>(null);
+  const accessToken = session?.access_token;
+
+  const loadProperties = useCallback(async () => {
+    if (!accessToken) {
+      setProperties([]);
+      setPropertiesError(null);
+      setPropertiesLoading(false);
+      return;
+    }
+    setPropertiesLoading(true);
+    try {
+      const list = await listAllPropertiesAdmin({
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setProperties(list);
+      setPropertiesError(null);
+    } catch (err) {
+      console.error("Could not load properties:", err);
+      setProperties([]);
+      setPropertiesError("Could not load your properties. Please try again.");
+    } finally {
+      setPropertiesLoading(false);
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -225,10 +247,14 @@ function AdminDashboard() {
     }
   }, [session, loading, navigate]);
 
+  useEffect(() => {
+    if (!loading) void loadProperties();
+  }, [loading, loadProperties]);
+
   // Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [propertyToEdit, setPropertyToEdit] = useState<DBProperty | null>(null);
-  const [activeTab, setActiveTab] = useState<"properties" | "bookings">("properties");
+  const [activeTab, setActiveTab] = useState<"properties" | "bookings" | "calendar">("properties");
   const [form, setForm] = useState<PropertyFormState>(defaultFormState);
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -304,19 +330,19 @@ function AdminDashboard() {
     setDeleting(true);
     try {
       const res = await deleteProperty({
-        data: { id: deleteId, accessToken: session?.access_token },
+        data: { id: deleteId },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.ok) {
         toast.success("Property deleted successfully");
-        await router.invalidate();
+        await loadProperties();
         setDeleteId(null);
         setDeleteName(null);
       } else {
         toast.error(res.error || "Failed to delete property");
       }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setDeleting(false);
     }
@@ -358,29 +384,25 @@ function AdminDashboard() {
           data: {
             id: propertyToEdit.id,
             input: payload,
-            accessToken: session?.access_token,
           },
           headers: { Authorization: `Bearer ${session?.access_token}` },
         });
       } else {
         res = await createProperty({
-          data: {
-            ...payload,
-            accessToken: session?.access_token,
-          },
+          data: payload,
           headers: { Authorization: `Bearer ${session?.access_token}` },
         });
       }
 
       if (res.ok) {
         toast.success(isEdit ? "Property updated successfully" : "Property created successfully");
-        await router.invalidate();
+        await loadProperties();
         setIsFormOpen(false);
       } else {
         setValidationError(res.error || "An error occurred.");
       }
-    } catch (err: any) {
-      setValidationError(err.message || "An unexpected error occurred.");
+    } catch (err) {
+      setValidationError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -429,10 +451,10 @@ function AdminDashboard() {
       {/* Main Body */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Tab Switcher */}
-        <div className="flex border-b border-border mb-8">
+        <div className="mb-8 grid grid-cols-3 gap-1 border-b border-border sm:flex sm:gap-0">
           <button
             onClick={() => setActiveTab("properties")}
-            className={`pb-3 text-sm font-semibold border-b-2 transition-all mr-6 cursor-pointer ${
+            className={`min-h-11 border-b-2 pb-3 text-[13px] font-semibold transition-all sm:mr-6 sm:text-sm cursor-pointer ${
               activeTab === "properties"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -442,13 +464,24 @@ function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("bookings")}
-            className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+            className={`min-h-11 border-b-2 pb-3 text-[13px] font-semibold transition-all sm:text-sm cursor-pointer ${
               activeTab === "bookings"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Booking Requests
+            <span className="sm:hidden">Requests</span>
+            <span className="hidden sm:inline">Booking Requests</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("calendar")}
+            className={`min-h-11 border-b-2 pb-3 text-[13px] font-semibold transition-all sm:ml-6 sm:text-sm cursor-pointer ${
+              activeTab === "calendar"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Calendar
           </button>
         </div>
 
@@ -474,10 +507,31 @@ function AdminDashboard() {
             </div>
 
             {/* Properties List */}
-            {properties.length === 0 ? (
+            {propertiesError ? (
+              <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center">
+                <p className="text-sm font-medium text-destructive">{propertiesError}</p>
+                <button
+                  onClick={() => void loadProperties()}
+                  className="mt-4 inline-flex items-center justify-center rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent cursor-pointer"
+                  style={{ minHeight: "44px" }}
+                >
+                  Try again
+                </button>
+              </div>
+            ) : propertiesLoading ? (
+              <div
+                className="flex items-center justify-center rounded-2xl border border-border bg-card p-12"
+                role="status"
+              >
+                <Loader2 className="size-6 animate-spin text-primary" />
+                <span className="sr-only">Loading properties</span>
+              </div>
+            ) : properties.length === 0 ? (
               <div className="text-center rounded-2xl border border-dashed border-border bg-card p-12">
                 <Home className="mx-auto size-12 text-muted-foreground/50 mb-4" />
-                <h3 className="font-display text-lg font-medium text-foreground">No properties yet</h3>
+                <h3 className="font-display text-lg font-medium text-foreground">
+                  No properties yet
+                </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Get started by creating your first vacation rental property.
                 </p>
@@ -517,7 +571,8 @@ function AdminDashboard() {
                       </div>
 
                       <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground">{property.area}</span> &middot; {property.short_description}
+                        <span className="font-semibold text-foreground">{property.area}</span>{" "}
+                        &middot; {property.short_description}
                       </p>
 
                       {/* Facts Row */}
@@ -525,14 +580,18 @@ function AdminDashboard() {
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <DollarSign className="size-3.5 text-primary shrink-0" />
                           <div>
-                            <div className="font-medium text-foreground">${property.base_rate}/night</div>
+                            <div className="font-medium text-foreground">
+                              ${property.base_rate}/night
+                            </div>
                             <div className="text-[10px]">Base rate</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <DollarSign className="size-3.5 text-primary shrink-0" />
                           <div>
-                            <div className="font-medium text-foreground">${property.cleaning_fee}</div>
+                            <div className="font-medium text-foreground">
+                              ${property.cleaning_fee}
+                            </div>
                             <div className="text-[10px]">Cleaning fee</div>
                           </div>
                         </div>
@@ -548,7 +607,9 @@ function AdminDashboard() {
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Users className="size-3.5 text-primary shrink-0" />
                           <div>
-                            <div className="font-medium text-foreground">Sleeps {property.max_guests}</div>
+                            <div className="font-medium text-foreground">
+                              Sleeps {property.max_guests}
+                            </div>
                             <div className="text-[10px]">Max guests</div>
                           </div>
                         </div>
@@ -564,7 +625,9 @@ function AdminDashboard() {
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Layers className="size-3.5 text-primary shrink-0" />
                           <div>
-                            <div className="font-medium text-foreground">Order: {property.sort_order}</div>
+                            <div className="font-medium text-foreground">
+                              Order: {property.sort_order}
+                            </div>
                             <div className="text-[10px]">Sort order</div>
                           </div>
                         </div>
@@ -603,8 +666,10 @@ function AdminDashboard() {
               </div>
             )}
           </>
-        ) : (
+        ) : activeTab === "bookings" ? (
           <BookingInbox accessToken={session?.access_token} properties={properties} />
+        ) : (
+          <AvailabilityCalendar accessToken={session?.access_token} properties={properties} />
         )}
       </main>
 
@@ -629,7 +694,9 @@ function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label htmlFor="prop-slug" className={labelBase}>ID (slug)*</label>
+                <label htmlFor="prop-slug" className={labelBase}>
+                  ID (slug)*
+                </label>
                 <input
                   id="prop-slug"
                   name="slug"
@@ -649,7 +716,9 @@ function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="prop-name" className={labelBase}>Name*</label>
+                <label htmlFor="prop-name" className={labelBase}>
+                  Name*
+                </label>
                 <input
                   id="prop-name"
                   name="name"
@@ -664,7 +733,9 @@ function AdminDashboard() {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="prop-area" className={labelBase}>Area*</label>
+              <label htmlFor="prop-area" className={labelBase}>
+                Area*
+              </label>
               <input
                 id="prop-area"
                 name="area"
@@ -678,7 +749,9 @@ function AdminDashboard() {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="prop-short-description" className={labelBase}>Short Description*</label>
+              <label htmlFor="prop-short-description" className={labelBase}>
+                Short Description*
+              </label>
               <textarea
                 id="prop-short-description"
                 name="short_description"
@@ -694,7 +767,9 @@ function AdminDashboard() {
             {/* Numeric Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <label htmlFor="prop-max-guests" className={labelBase}>Max Guests*</label>
+                <label htmlFor="prop-max-guests" className={labelBase}>
+                  Max Guests*
+                </label>
                 <input
                   id="prop-max-guests"
                   name="max_guests"
@@ -708,7 +783,9 @@ function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="prop-bedrooms" className={labelBase}>Bedrooms*</label>
+                <label htmlFor="prop-bedrooms" className={labelBase}>
+                  Bedrooms*
+                </label>
                 <input
                   id="prop-bedrooms"
                   name="bedrooms"
@@ -722,7 +799,9 @@ function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="prop-bathrooms" className={labelBase}>Bathrooms*</label>
+                <label htmlFor="prop-bathrooms" className={labelBase}>
+                  Bathrooms*
+                </label>
                 <input
                   id="prop-bathrooms"
                   name="bathrooms"
@@ -737,7 +816,9 @@ function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="prop-min-nights" className={labelBase}>Min Nights*</label>
+                <label htmlFor="prop-min-nights" className={labelBase}>
+                  Min Nights*
+                </label>
                 <input
                   id="prop-min-nights"
                   name="min_nights"
@@ -751,7 +832,9 @@ function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="prop-base-rate" className={labelBase}>Base Rate ($)*</label>
+                <label htmlFor="prop-base-rate" className={labelBase}>
+                  Base Rate ($)*
+                </label>
                 <input
                   id="prop-base-rate"
                   name="base_rate"
@@ -765,7 +848,9 @@ function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="prop-cleaning-fee" className={labelBase}>Cleaning Fee ($)*</label>
+                <label htmlFor="prop-cleaning-fee" className={labelBase}>
+                  Cleaning Fee ($)*
+                </label>
                 <input
                   id="prop-cleaning-fee"
                   name="cleaning_fee"
@@ -773,13 +858,17 @@ function AdminDashboard() {
                   min="0"
                   required
                   value={form.cleaning_fee}
-                  onChange={(e) => setForm({ ...form, cleaning_fee: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setForm({ ...form, cleaning_fee: parseFloat(e.target.value) || 0 })
+                  }
                   className={inputBase}
                 />
               </div>
 
               <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                <label htmlFor="prop-sort-order" className={labelBase}>Sort Order*</label>
+                <label htmlFor="prop-sort-order" className={labelBase}>
+                  Sort Order*
+                </label>
                 <input
                   id="prop-sort-order"
                   name="sort_order"
@@ -798,7 +887,10 @@ function AdminDashboard() {
                   checked={form.is_active}
                   onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
                 />
-                <label htmlFor="prop-is-active" className="text-sm font-medium text-foreground cursor-pointer select-none">
+                <label
+                  htmlFor="prop-is-active"
+                  className="text-sm font-medium text-foreground cursor-pointer select-none"
+                >
                   Is active / visible on storefront
                 </label>
               </div>
@@ -839,7 +931,13 @@ function AdminDashboard() {
                 className="inline-flex items-center justify-center rounded-xl bg-primary text-primary-foreground px-5 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 disabled:opacity-50 cursor-pointer"
                 style={{ minHeight: "44px" }}
               >
-                {submitting ? <Loader2 className="size-4 animate-spin" /> : isEdit ? "Save Changes" : "Create Property"}
+                {submitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : isEdit ? (
+                  "Save Changes"
+                ) : (
+                  "Create Property"
+                )}
               </button>
             </div>
           </form>
@@ -847,19 +945,28 @@ function AdminDashboard() {
       </Dialog>
 
       {/* Delete Confirmation Alert Dialog */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+      >
         <AlertDialogContent className="rounded-2xl max-w-md p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-xl font-bold">
               Are you absolutely sure?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
-              This will permanently delete the property <strong>{deleteName}</strong> and remove its data from the database. This action cannot be undone.
+              This will permanently delete the property <strong>{deleteName}</strong> and remove its
+              data from the database. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel asChild>
-              <button className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors cursor-pointer" style={{ minHeight: "44px" }}>
+              <button
+                className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors cursor-pointer"
+                style={{ minHeight: "44px" }}
+              >
                 Cancel
               </button>
             </AlertDialogCancel>

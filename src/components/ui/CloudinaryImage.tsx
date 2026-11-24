@@ -21,7 +21,7 @@ export interface CloudinaryImageProps extends CloudinaryOptions {
   className?: string;
   width?: number;
   height?: number;
-  pictureSources?: PictureSource[];
+  pictureSources?: PictureSource[] | undefined;
 }
 
 export function CloudinaryImage({
@@ -72,7 +72,9 @@ export function CloudinaryImage({
       loading={loading}
       fetchPriority={fetchPriority}
       decoding="async"
-      className={pictureSources && pictureSources.length > 0 ? "h-full w-full object-cover" : className}
+      className={
+        pictureSources && pictureSources.length > 0 ? "h-full w-full object-cover" : className
+      }
     />
   );
 
@@ -89,14 +91,7 @@ export function CloudinaryImage({
           };
           const sWidths = source.widths ?? widths;
           const sSrcSet = sWidths ? cloudinarySrcSet(src, sWidths, sOpts) : undefined;
-          return (
-            <source
-              key={idx}
-              media={source.media}
-              srcSet={sSrcSet}
-              sizes={source.sizes}
-            />
-          );
+          return <source key={idx} media={source.media} srcSet={sSrcSet} sizes={source.sizes} />;
         })}
         {imgElement}
       </picture>

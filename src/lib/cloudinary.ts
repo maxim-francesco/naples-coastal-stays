@@ -1,11 +1,11 @@
 export interface CloudinaryOptions {
-  width?: number;
-  height?: number;
-  aspectRatio?: string;
-  crop?: string;
-  gravity?: string;
-  quality?: string;
-  format?: string;
+  width?: number | undefined;
+  height?: number | undefined;
+  aspectRatio?: string | undefined;
+  crop?: string | undefined;
+  gravity?: string | undefined;
+  quality?: string | undefined;
+  format?: string | undefined;
 }
 
 export function isCloudinaryUrl(url: string): boolean {
@@ -70,13 +70,11 @@ export function cloudinaryUrl(url: string, opts: CloudinaryOptions = {}): string
 export function cloudinarySrcSet(
   url: string,
   widths: number[],
-  opts: CloudinaryOptions = {}
+  opts: CloudinaryOptions = {},
 ): string {
   if (!isCloudinaryUrl(url) || !widths || widths.length === 0) {
     return "";
   }
 
-  return widths
-    .map((w) => `${cloudinaryUrl(url, { ...opts, width: w })} ${w}w`)
-    .join(", ");
+  return widths.map((w) => `${cloudinaryUrl(url, { ...opts, width: w })} ${w}w`).join(", ");
 }

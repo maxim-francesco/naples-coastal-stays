@@ -36,11 +36,15 @@ interface BookingInboxProps {
   properties: DBProperty[];
 }
 
+function messageFromError(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
   const [bookings, setBookings] = useState<DBBookingRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<"all" | "new" | "confirmed" | "declined">("all");
-  
+
   // Action processing states
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -58,9 +62,9 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setBookings(res);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e.message || "Failed to load bookings");
+      toast.error(messageFromError(e, "Failed to load bookings"));
     } finally {
       setLoading(false);
     }
@@ -85,8 +89,8 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
       } else {
         toast.error(res.error || "Failed to update status");
       }
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err: unknown) {
+      toast.error(messageFromError(err, "An error occurred"));
     } finally {
       setProcessingId(null);
     }
@@ -107,8 +111,8 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
       } else {
         toast.error(res.error || "Failed to delete request");
       }
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err: unknown) {
+      toast.error(messageFromError(err, "An error occurred"));
     } finally {
       setDeleting(false);
     }
@@ -151,7 +155,7 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
       <div className="flex border-b border-border overflow-x-auto no-scrollbar scroll-smooth">
         <button
           onClick={() => setFilter("all")}
-          className={`flex-1 min-w-[90px] py-3 text-center border-b-2 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+          className={`flex-1 py-3 text-center border-b-2 text-[13px] font-semibold sm:min-w-[90px] sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             filter === "all"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -161,7 +165,7 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
         </button>
         <button
           onClick={() => setFilter("new")}
-          className={`flex-1 min-w-[90px] py-3 text-center border-b-2 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+          className={`flex-1 py-3 text-center border-b-2 text-[13px] font-semibold sm:min-w-[90px] sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             filter === "new"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -171,7 +175,7 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
         </button>
         <button
           onClick={() => setFilter("confirmed")}
-          className={`flex-1 min-w-[90px] py-3 text-center border-b-2 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+          className={`flex-1 py-3 text-center border-b-2 text-[13px] font-semibold sm:min-w-[90px] sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             filter === "confirmed"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -181,7 +185,7 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
         </button>
         <button
           onClick={() => setFilter("declined")}
-          className={`flex-1 min-w-[90px] py-3 text-center border-b-2 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+          className={`flex-1 py-3 text-center border-b-2 text-[13px] font-semibold sm:min-w-[90px] sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             filter === "declined"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -260,7 +264,8 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
                       <Calendar className="size-3.5 text-primary" /> Dates
                     </span>
                     <p className="font-medium text-foreground">
-                      {formatLocalDateString(booking.check_in)} → {formatLocalDateString(booking.check_out)}
+                      {formatLocalDateString(booking.check_in)} →{" "}
+                      {formatLocalDateString(booking.check_out)}
                     </p>
                   </div>
 
@@ -320,7 +325,7 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
                         onClick={() => handleStatusChange(booking.id, "confirmed")}
                         disabled={processingId !== null}
                         className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 text-xs font-semibold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-                        style={{ minHeight: "36px" }}
+                        style={{ minHeight: "44px" }}
                       >
                         {processingId === booking.id ? (
                           <Loader2 className="size-3 animate-spin" />
@@ -335,7 +340,7 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
                         onClick={() => handleStatusChange(booking.id, "declined")}
                         disabled={processingId !== null}
                         className="inline-flex items-center justify-center gap-1 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 px-4 py-2 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
-                        style={{ minHeight: "36px" }}
+                        style={{ minHeight: "44px" }}
                       >
                         {processingId === booking.id ? (
                           <Loader2 className="size-3 animate-spin" />
@@ -350,18 +355,18 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
                         onClick={() => handleStatusChange(booking.id, "new")}
                         disabled={processingId !== null}
                         className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-card hover:bg-accent text-foreground px-4 py-2 text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
-                        style={{ minHeight: "36px" }}
+                        style={{ minHeight: "44px" }}
                       >
                         Mark New
                       </button>
                     )}
                   </div>
-                  
+
                   <button
                     onClick={() => setDeleteId(booking.id)}
                     disabled={processingId !== null}
                     className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 px-3.5 py-2 text-xs font-semibold text-destructive transition-all disabled:opacity-50 cursor-pointer"
-                    style={{ minHeight: "36px" }}
+                    style={{ minHeight: "44px" }}
                   >
                     <Trash2 className="size-3.5" />
                     Delete
@@ -374,19 +379,28 @@ export function BookingInbox({ accessToken, properties }: BookingInboxProps) {
       )}
 
       {/* Delete Confirmation Alert Dialog */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+      >
         <AlertDialogContent className="rounded-2xl max-w-md p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-xl font-bold">
               Delete Booking Request
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
-              Are you sure you want to permanently delete this booking request? This action will remove it from the database and cannot be undone.
+              Are you sure you want to permanently delete this booking request? This action will
+              remove it from the database and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel asChild>
-              <button className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors cursor-pointer" style={{ minHeight: "44px" }}>
+              <button
+                className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors cursor-pointer"
+                style={{ minHeight: "44px" }}
+              >
                 Cancel
               </button>
             </AlertDialogCancel>
